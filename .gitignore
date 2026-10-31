@@ -1,0 +1,20 @@
+# Node dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production build artifacts
+client/dist/
+dist/
+
+# Database and local data
+server/data/
+*.log
+tunnel-url.txt
+
+# Binaries and environment
+cloudflared.exe
+.env
+.env.local
+.DS_Store
+Thumbs.db

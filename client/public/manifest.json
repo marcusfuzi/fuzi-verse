@@ -1,0 +1,27 @@
+{
+  "id": "/?source=pwa",
+  "short_name": "FUZI VERSE",
+  "name": "FUZI VERSE Music Platform",
+  "description": "Your Music. Your Verse. Your World. Premier independent music creator platform.",
+  "icons": [
+    {
+      "src": "/fuzi-icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/fuzi-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07080c",
+  "theme_color": "#07080c",
+  "categories": ["music", "entertainment", "audio"]
+}
