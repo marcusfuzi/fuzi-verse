@@ -18,3 +18,10 @@ cloudflared.exe
 .env.local
 .DS_Store
 Thumbs.db
+
+# Local Windows launcher scripts (kept on PC, ignored from GitHub)
+*.bat
+*.vbs
+
+# Local duplicate uploads cache
+client/public/uploads/
