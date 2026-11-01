@@ -6,9 +6,13 @@
   "scripts": {
     "start": "node server/src/index.js",
     "start:prod": "node server/src/index.js",
-    "build": "npm --prefix server install --include=dev && npm --prefix client install --include=dev && cd client && npm run build",
+    "build": "npm --prefix server install --include=dev && npm --prefix client install --include=dev && cd client && npm run build && cd .. && node scripts/setup-render-start.js",
     "install:all": "npm --prefix server install && npm --prefix client install",
     "dev": "node start.js",
     "seed": "cd server && npm run seed"
+  },
+  "bin": {
+    "start:prod": "./server/src/index.js",
+    "start": "./server/src/index.js"
   }
 }

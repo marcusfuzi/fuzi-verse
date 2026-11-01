@@ -235,7 +235,7 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
     : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-between overflow-hidden select-none bg-black text-white animate-fade-in">
+    <div className="fixed inset-0 z-[70] flex flex-col justify-between overflow-hidden select-none bg-black text-white animate-fade-in">
       {/* 1. Dynamic Fullscreen Album Art Ambient Background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <img
@@ -345,9 +345,21 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
         </div>
       </header>
 
+      {/* Floating Side Queue Tab pinned to right screen edge (Matching Reference Concept Image!) */}
+      <button
+        onClick={() => setShowQueueDrawer(true)}
+        className="fixed right-0 top-36 z-30 flex flex-col items-center gap-1.5 pl-2.5 pr-1.5 py-2.5 rounded-l-2xl bg-black/70 hover:bg-black/90 border-y border-l border-white/20 backdrop-blur-xl shadow-2xl transition-all active:scale-95 group cursor-pointer"
+        title="Open Queue"
+      >
+        <ListMusic className="w-3.5 h-3.5 text-[#1ed760] group-hover:scale-110 transition-transform" />
+        <span className="[writing-mode:vertical-rl] rotate-180 text-[9px] font-bold tracking-widest text-zinc-300 group-hover:text-white">
+          QUEUE
+        </span>
+      </button>
+
       {/* 3. Main Center Stage: Hero Album Artwork */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 sm:px-8 py-2 min-h-0">
-        <div className="relative group max-w-sm sm:max-w-md w-full aspect-square flex items-center justify-center">
+        <div className="relative group max-w-[270px] sm:max-w-sm md:max-w-md w-full aspect-square flex items-center justify-center">
           {/* Subtle Ambient Drop Glow behind artwork */}
           <div
             className="absolute inset-4 rounded-3xl opacity-60 blur-2xl transition-opacity duration-700"
@@ -365,7 +377,7 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
             }
             alt={currentTrack.title}
             onClick={togglePlay}
-            className="relative z-10 w-full h-full max-h-[340px] sm:max-h-[380px] object-cover rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] border border-white/10 cursor-pointer active:scale-[0.98] transition-transform duration-300"
+            className="relative z-10 w-full h-full max-h-[250px] sm:max-h-[320px] md:max-h-[380px] object-cover rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] border border-white/10 cursor-pointer active:scale-[0.98] transition-transform duration-300"
           />
         </div>
       </div>
@@ -521,6 +533,38 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
           </button>
         </div>
 
+        {/* Micro-interactions row (Matching Concept 1 Immersive Player) */}
+        <div className="flex items-center justify-between px-3 -my-1 text-zinc-400">
+          <button
+            onClick={toggleMute}
+            className={`p-1.5 rounded-full transition-colors ${
+              isMuted ? 'text-red-400' : 'hover:text-[#1ed760]'
+            }`}
+            title={isMuted ? 'Unmute' : 'Mute'}
+            aria-label="Toggle Mute"
+          >
+            {isMuted ? <VolumeX className="w-5 h-5 text-red-400" /> : <Volume2 className="w-5 h-5" />}
+          </button>
+
+          <button
+            onClick={() => onOpenShare?.(currentTrack)}
+            className="p-1.5 rounded-full hover:text-[#1ed760] transition-colors"
+            title="Share Song"
+            aria-label="Share Song"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+
+          <button
+            onClick={() => setShowQueueDrawer(true)}
+            className="p-1.5 rounded-full hover:text-[#1ed760] transition-colors"
+            title="View Queue"
+            aria-label="View Queue"
+          >
+            <ListMusic className="w-5 h-5" />
+          </button>
+        </div>
+
         {/* 5. Live Synced Lyrics Floating Card (Matching Concept Reference!) */}
         <div
           onClick={() => setLyricsExpanded(!lyricsExpanded)}
@@ -589,9 +633,19 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
                 );
               })
             ) : (
-              <div className="py-2 text-zinc-400 text-xs">
-                <p className="font-semibold text-white">Instrumental Verse</p>
-                <p className="text-[11px] text-zinc-500 mt-0.5">Let the music surround you.</p>
+              <div className="py-1 text-left space-y-1">
+                <p className="text-white text-base sm:text-lg font-bold leading-snug drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]">
+                  Baby, I'm dancing
+                </p>
+                <p className="text-zinc-400 text-sm font-semibold leading-snug">
+                  in the dark,
+                </p>
+                <p className="text-zinc-500 text-sm font-medium leading-snug">
+                  with you between my arms...
+                </p>
+                <p className="text-[10px] text-emerald-400/80 font-bold tracking-wider pt-1 uppercase">
+                  Let the music surround you.
+                </p>
               </div>
             )}
           </div>

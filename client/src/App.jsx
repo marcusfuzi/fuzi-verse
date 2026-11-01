@@ -232,7 +232,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-[#07080c] text-white flex flex-col relative selection:bg-purple-600 selection:text-white">
       {/* Mobile PWA Install Floating Banner */}
-      <MobileInstallBanner />
+      {!isNowPlayingOpen && <MobileInstallBanner />}
 
       {/* Top Navbar */}
       <Navbar
@@ -341,16 +341,20 @@ function AppContent() {
       <Footer onNavigate={navigate} />
 
       {/* Persistent Bottom Audio Player Bar */}
-      <MiniPlayer
-        onNavigate={navigate}
-        onOpenShare={(item) => setShareItem(item)}
-      />
+      {!isNowPlayingOpen && (
+        <MiniPlayer
+          onNavigate={navigate}
+          onOpenShare={(item) => setShareItem(item)}
+        />
+      )}
 
       {/* Mobile Floating Bottom Bar (Matching Reference Mockup!) */}
-      <MobileNav
-        currentRoute={currentRoute}
-        onNavigate={navigate}
-      />
+      {!isNowPlayingOpen && (
+        <MobileNav
+          currentRoute={currentRoute}
+          onNavigate={navigate}
+        />
+      )}
 
       {/* Fullscreen 3D Immersive Player Modal */}
       <NowPlayingModal
