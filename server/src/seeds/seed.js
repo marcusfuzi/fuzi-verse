@@ -13,7 +13,7 @@ import { ensureDemoAudioFiles } from './generateDemoAudio.js';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/fuzi_verse';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://marcusfuzi01_db_user:iC4vnmQjI8Tt3Pii@cluster0.qhvrmhm.mongodb.net/fuzi_verse?retryWrites=true&w=majority';
 
 const generateWaveform = (count = 48) => {
   const bars = [];
@@ -30,7 +30,7 @@ export async function runSeed(dropExisting = true) {
     if (mongoose.connection.readyState !== 1) {
       console.log('Connecting to MongoDB for seeding:', MONGO_URI);
       try {
-        await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 2000 });
+        await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 15000 });
         console.log('Connected to MongoDB.');
       } catch (connErr) {
         console.warn(`⚠️ Cannot connect to ${MONGO_URI}. Connecting to embedded database...`);

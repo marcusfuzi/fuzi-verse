@@ -40,6 +40,16 @@ export function PlayerProvider({ children }) {
     const onPause = () => setIsPlaying(false);
     const onError = (e) => {
       console.warn('Audio playback error:', e);
+      if (audioRef.current && audioRef.current.src && !audioRef.current.src.includes('retry=1')) {
+        const separator = audioRef.current.src.includes('?') ? '&' : '?';
+        audioRef.current.src = audioRef.current.src + separator + 'retry=1';
+        audioRef.current.load();
+        audioRef.current.play().catch(() => {
+          setAudioError('Stream unavailable');
+          setIsPlaying(false);
+        });
+        return;
+      }
       setAudioError('Unable to stream audio track');
       setIsPlaying(false);
     };
@@ -85,6 +95,10 @@ export function PlayerProvider({ children }) {
   };
 
   const handleTrackEnd = () => {
+    // Guard against premature 'ended' events triggered by mobile network jitter
+    if (audioRef.current && duration > 2 && audioRef.current.currentTime < 1) {
+      return;
+    }
     if (repeatMode === 'one' && audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => {});

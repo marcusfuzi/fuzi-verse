@@ -6,6 +6,7 @@ import { User } from '../models/User.js';
 import { Notification } from '../models/Notification.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { uploadTrackFiles, uploadCoverImage } from '../middleware/upload.js';
+import { saveToGridFS } from '../services/gridfsService.js';
 import fs from 'fs';
 import path from 'path';
 
