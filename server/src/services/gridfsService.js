@@ -9,12 +9,15 @@ const __dirname = path.dirname(__filename);
 let bucket = null;
 
 export function getGridFSBucket() {
-  if (!bucket && mongoose.connection.readyState === 1 && mongoose.connection.db) {
-    bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-      bucketName: 'uploads',
-    });
+  if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+    if (!bucket) {
+      bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+        bucketName: 'uploads',
+      });
+    }
+    return bucket;
   }
-  return bucket;
+  return null;
 }
 
 /**
