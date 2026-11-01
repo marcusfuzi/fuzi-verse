@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 import { requireAuth } from '../middleware/auth.js';
 import { uploadSingleImage } from '../middleware/upload.js';
+import { saveToGridFS } from '../services/gridfsService.js';
 
 const router = express.Router();
 
@@ -123,6 +124,7 @@ router.put('/update-profile', requireAuth, uploadSingleImage, async (req, res) =
 
     if (req.file) {
       updates.avatar = `/uploads/covers/${req.file.filename}`;
+      await saveToGridFS(req.file.path, req.file.filename, req.file.mimetype || 'image/jpeg', true);
     } else if (req.body.avatar) {
       updates.avatar = req.body.avatar.trim();
     }

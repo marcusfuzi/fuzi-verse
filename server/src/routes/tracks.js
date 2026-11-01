@@ -6,7 +6,7 @@ import { User } from '../models/User.js';
 import { Notification } from '../models/Notification.js';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { uploadTrackFiles, uploadCoverImage } from '../middleware/upload.js';
-import { saveToGridFS } from '../services/gridfsService.js';
+import { saveToGridFS, deleteFromGridFS } from '../services/gridfsService.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -184,9 +184,15 @@ router.post('/upload', requireAuth, uploadTrackFiles, async (req, res) => {
     const audioFile = req.files['audio'][0];
     const audioUrl = `/uploads/audio/${audioFile.filename}`;
 
+    // Immediately persist audio file into MongoDB Atlas GridFS permanently
+    await saveToGridFS(audioFile.path, audioFile.filename, audioFile.mimetype || 'audio/mpeg');
+
     let coverArtUrl = '';
     if (req.files['cover'] && req.files['cover'].length > 0) {
-      coverArtUrl = `/uploads/covers/${req.files['cover'][0].filename}`;
+      const coverFile = req.files['cover'][0];
+      coverArtUrl = `/uploads/covers/${coverFile.filename}`;
+      // Immediately persist cover image into MongoDB Atlas GridFS permanently
+      await saveToGridFS(coverFile.path, coverFile.filename, coverFile.mimetype || 'image/jpeg');
     } else {
       // Default generative cover
       const palettes = ['purple', 'cyan', 'amber', 'rose', 'indigo'];
@@ -343,6 +349,7 @@ router.put('/:id', requireAuth, uploadCoverImage, async (req, res) => {
     // Update cover photo if uploaded as new file or provided as URL/preset
     if (req.file) {
       track.coverArtUrl = `/uploads/covers/${req.file.filename}`;
+      await saveToGridFS(req.file.path, req.file.filename, req.file.mimetype || 'image/jpeg', true);
     } else if (coverArtUrl && coverArtUrl.trim()) {
       track.coverArtUrl = coverArtUrl.trim();
     }
@@ -373,6 +380,14 @@ router.delete('/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized to delete this track.' });
     }
 
+    if (track.audioUrl && track.audioUrl.startsWith('/uploads/audio/')) {
+      const audioName = track.audioUrl.replace('/uploads/audio/', '');
+      deleteFromGridFS(audioName).catch(() => {});
+    }
+    if (track.coverArtUrl && track.coverArtUrl.startsWith('/uploads/covers/')) {
+      const coverName = track.coverArtUrl.replace('/uploads/covers/', '');
+      deleteFromGridFS(coverName).catch(() => {});
+    }
     await Track.deleteOne({ _id: track._id });
     await Like.deleteMany({ track: track._id });
 

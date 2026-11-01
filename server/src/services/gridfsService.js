@@ -20,18 +20,26 @@ export function getGridFSBucket() {
 /**
  * Save a local file into MongoDB Atlas GridFS permanently
  */
-export async function saveToGridFS(filePath, filename, contentType) {
+export async function saveToGridFS(filePath, filename, contentType, overwrite = false) {
   try {
     const gfs = getGridFSBucket();
     if (!gfs) return false;
 
     // Check if already stored
-    const existing = await gfs.find({ filename }).limit(1).toArray();
-    if (existing.length > 0) return true;
+    const existing = await gfs.find({ filename }).toArray();
+    if (existing.length > 0) {
+      if (overwrite) {
+        for (const file of existing) {
+          await gfs.delete(file._id).catch(() => {});
+        }
+      } else {
+        return true;
+      }
+    }
 
     if (!fs.existsSync(filePath)) return false;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const readStream = fs.createReadStream(filePath);
       const uploadStream = gfs.openUploadStream(filename, {
         contentType: contentType || (filename.endsWith('.mp3') ? 'audio/mpeg' : 'image/jpeg'),
@@ -50,6 +58,24 @@ export async function saveToGridFS(filePath, filename, contentType) {
     });
   } catch (err) {
     console.warn(`[GridFS] Error saving ${filename}:`, err.message);
+    return false;
+  }
+}
+
+/**
+ * Delete a file from GridFS
+ */
+export async function deleteFromGridFS(filename) {
+  try {
+    const gfs = getGridFSBucket();
+    if (!gfs) return false;
+    const existing = await gfs.find({ filename }).toArray();
+    for (const file of existing) {
+      await gfs.delete(file._id).catch(() => {});
+    }
+    return true;
+  } catch (err) {
+    console.warn(`[GridFS] Error deleting ${filename}:`, err.message);
     return false;
   }
 }
