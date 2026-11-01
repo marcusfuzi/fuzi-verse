@@ -35,6 +35,79 @@ export default function HomePage({
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
   const [followingMap, setFollowingMap] = useState({});
 
+  // Hero Carousel State & Theme Configuration
+  const heroTracks = (tracks || []).filter((t) => !t.isBlocked && t.audioUrl).slice(0, 6);
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const safeHeroIndex = heroTracks.length > 0 ? activeHeroIndex % heroTracks.length : 0;
+  const activeHeroTrack = heroTracks[safeHeroIndex] || (tracks && tracks[0]) || null;
+  const isHeroPlaying = isPlaying && currentTrack?._id === activeHeroTrack?._id;
+
+  const AMBIENT_THEMES = [
+    {
+      tag: 'Trending Worldwide 🔥',
+      glowAura: 'rgba(168, 85, 247, 0.35)',
+      glowOrb1: 'bg-purple-600/35',
+      glowOrb2: 'bg-pink-500/25',
+      badgeBg: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+      accentColor: '#c084fc',
+    },
+    {
+      tag: 'Fuzi Spotlight ⭐',
+      glowAura: 'rgba(245, 158, 11, 0.35)',
+      glowOrb1: 'bg-amber-500/35',
+      glowOrb2: 'bg-red-500/25',
+      badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      accentColor: '#fbbf24',
+    },
+    {
+      tag: 'Fresh Drop ⚡',
+      glowAura: 'rgba(16, 185, 129, 0.32)',
+      glowOrb1: 'bg-emerald-500/35',
+      glowOrb2: 'bg-cyan-500/25',
+      badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      accentColor: '#34d399',
+    },
+    {
+      tag: 'Curated Verse 🎧',
+      glowAura: 'rgba(59, 130, 246, 0.35)',
+      glowOrb1: 'bg-blue-600/35',
+      glowOrb2: 'bg-cyan-500/25',
+      badgeBg: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+      accentColor: '#60a5fa',
+    },
+    {
+      tag: 'Top Indie Stream ✨',
+      glowAura: 'rgba(236, 72, 153, 0.35)',
+      glowOrb1: 'bg-pink-600/35',
+      glowOrb2: 'bg-purple-600/25',
+      badgeBg: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+      accentColor: '#f472b6',
+    },
+  ];
+
+  const currentTheme = AMBIENT_THEMES[safeHeroIndex % AMBIENT_THEMES.length];
+
+  const handlePrevSlide = () => {
+    if (heroTracks.length <= 1) return;
+    setActiveHeroIndex((prev) => (prev === 0 ? heroTracks.length - 1 : prev - 1));
+  };
+
+  const handleNextSlide = () => {
+    if (heroTracks.length <= 1) return;
+    setActiveHeroIndex((prev) => (prev + 1) % heroTracks.length);
+  };
+
+  // Auto-slide every 5 seconds smoothly, pause when user hovers or interacts
+  useEffect(() => {
+    if (heroTracks.length <= 1 || isHovered) return;
+    const interval = setInterval(() => {
+      setActiveHeroIndex((prev) => (prev + 1) % heroTracks.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [heroTracks.length, isHovered]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
