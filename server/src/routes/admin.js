@@ -4,6 +4,8 @@ import { Track } from '../models/Track.js';
 import { Report } from '../models/Report.js';
 import { Notification } from '../models/Notification.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { runAutoPurge } from '../services/autoPurgeService.js';
+import { deleteFromGridFS } from '../services/gridfsService.js';
 
 const router = express.Router();
 
@@ -26,6 +28,14 @@ router.get('/overview', async (req, res) => {
     const totalPlays = playAggregate[0]?.totalPlays || 0;
     const totalLikes = playAggregate[0]?.totalLikes || 0;
 
+    // Run auto-purge check on overview load
+    await runAutoPurge().catch(() => {});
+
+    const [blockedTracksCount, blockedUsersCount] = await Promise.all([
+      Track.countDocuments({ isBlocked: true }),
+      User.countDocuments({ $or: [{ isBlocked: true }, { isSuspended: true }], scheduledDeleteAt: { $ne: null } }),
+    ]);
+
     return res.json({
       stats: {
         totalUsers,
@@ -34,6 +44,8 @@ router.get('/overview', async (req, res) => {
         pendingReports,
         totalPlays,
         totalLikes,
+        blockedTracksCount,
+        blockedUsersCount,
       },
     });
   } catch (err) {
@@ -141,6 +153,14 @@ router.delete('/tracks/:id', async (req, res) => {
     const trackTitle = track.title;
     const artistId = track.artist;
 
+    if (track.audioUrl && track.audioUrl.startsWith('/uploads/audio/')) {
+      const audioName = track.audioUrl.replace('/uploads/audio/', '');
+      await deleteFromGridFS(audioName).catch(() => {});
+    }
+    if (track.coverArtUrl && track.coverArtUrl.startsWith('/uploads/covers/')) {
+      const coverName = track.coverArtUrl.replace('/uploads/covers/', '');
+      await deleteFromGridFS(coverName).catch(() => {});
+    }
     await Track.deleteOne({ _id: track._id });
     if (artistId) {
       await Notification.create({
@@ -169,17 +189,172 @@ router.get('/users', async (req, res) => {
   }
 });
 
-// POST /api/admin/users/:id/toggle-suspend
-router.post('/users/:id/toggle-suspend', async (req, res) => {
+
+// POST /api/admin/tracks/:id/block - Block song with 5-day scheduled auto-delete
+router.post('/tracks/:id/block', async (req, res) => {
+  try {
+    const track = await Track.findById(req.params.id);
+    if (!track) return res.status(404).json({ error: 'Track not found.' });
+
+    const fiveDaysMs = 5 * 24 * 60 * 60 * 1000; // 5 days in milliseconds
+    const now = new Date();
+    const scheduledDeleteAt = new Date(now.getTime() + fiveDaysMs);
+
+    track.isBlocked = true;
+    track.isPublic = false;
+    track.blockedAt = now;
+    track.scheduledDeleteAt = scheduledDeleteAt;
+
+    await track.save();
+
+    if (track.artist) {
+      await Notification.create({
+        recipient: track.artist,
+        type: 'takedown',
+        message: `Admin Notice: Your track "${track.title}" has been blocked and will be permanently deleted on ${scheduledDeleteAt.toLocaleDateString()} (in 5 days).`,
+      }).catch(() => {});
+    }
+
+    return res.json({
+      message: `Track "${track.title}" has been blocked. It is hidden immediately and will be permanently deleted after 5 days (${scheduledDeleteAt.toLocaleDateString()}).`,
+      track,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/tracks/:id/unblock - Restore blocked song
+router.post('/tracks/:id/unblock', async (req, res) => {
+  try {
+    const track = await Track.findById(req.params.id);
+    if (!track) return res.status(404).json({ error: 'Track not found.' });
+
+    track.isBlocked = false;
+    track.isPublic = true;
+    track.blockedAt = null;
+    track.scheduledDeleteAt = null;
+
+    await track.save();
+
+    return res.json({
+      message: `Track "${track.title}" has been restored and unblocked successfully.`,
+      track,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/users/:id/block - Block user ID with 5-day scheduled auto-delete
+router.post('/users/:id/block', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (user.role === 'admin') return res.status(403).json({ error: 'Cannot block administrator account.' });
+
+    const fiveDaysMs = 5 * 24 * 60 * 60 * 1000;
+    const now = new Date();
+    const scheduledDeleteAt = new Date(now.getTime() + fiveDaysMs);
+
+    user.isBlocked = true;
+    user.isSuspended = true;
+    user.blockedAt = now;
+    user.scheduledDeleteAt = scheduledDeleteAt;
+    await user.save();
+
+    // Immediately hide all songs by this user and schedule their 5-day deletion
+    await Track.updateMany(
+      { artist: user._id },
+      {
+        $set: {
+          isBlocked: true,
+          isPublic: false,
+          blockedAt: now,
+          scheduledDeleteAt,
+        },
+      }
+    );
+
+    return res.json({
+      message: `User @${user.username} (ID: ${user._id}) has been blocked. Account and songs are hidden and will be permanently deleted after 5 days (${scheduledDeleteAt.toLocaleDateString()}).`,
+      user,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/users/:id/unblock - Unblock user ID
+router.post('/users/:id/unblock', async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found.' });
 
-    user.isSuspended = !user.isSuspended;
+    user.isBlocked = false;
+    user.isSuspended = false;
+    user.blockedAt = null;
+    user.scheduledDeleteAt = null;
+    await user.save();
+
+    // Restore songs
+    await Track.updateMany(
+      { artist: user._id },
+      {
+        $set: {
+          isBlocked: false,
+          isPublic: true,
+          blockedAt: null,
+          scheduledDeleteAt: null,
+        },
+      }
+    );
+
+    return res.json({
+      message: `User @${user.username} has been unblocked. Account and songs are active again.`,
+      user,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/users/:id/toggle-suspend (Updated with 5-day deletion on block)
+router.post('/users/:id/toggle-suspend', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (user.role === 'admin') return res.status(403).json({ error: 'Cannot modify administrator account.' });
+
+    const newSuspended = !user.isSuspended;
+    user.isSuspended = newSuspended;
+    user.isBlocked = newSuspended;
+
+    const fiveDaysMs = 5 * 24 * 60 * 60 * 1000;
+    const now = new Date();
+
+    if (newSuspended) {
+      user.blockedAt = now;
+      user.scheduledDeleteAt = new Date(now.getTime() + fiveDaysMs);
+      await Track.updateMany(
+        { artist: user._id },
+        { $set: { isBlocked: true, isPublic: false, blockedAt: now, scheduledDeleteAt: user.scheduledDeleteAt } }
+      );
+    } else {
+      user.blockedAt = null;
+      user.scheduledDeleteAt = null;
+      await Track.updateMany(
+        { artist: user._id },
+        { $set: { isBlocked: false, isPublic: true, blockedAt: null, scheduledDeleteAt: null } }
+      );
+    }
+
     await user.save();
 
     return res.json({
-      message: `User ${user.displayName} is now ${user.isSuspended ? 'suspended' : 'active'}.`,
+      message: newSuspended
+        ? `User @${user.username} blocked. Account & songs will be permanently deleted after 5 days.`
+        : `User @${user.username} unblocked and restored.`,
       user,
     });
   } catch (err) {

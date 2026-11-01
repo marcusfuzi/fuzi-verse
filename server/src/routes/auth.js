@@ -80,8 +80,13 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials. User not found.' });
     }
 
-    if (user.isSuspended) {
-      return res.status(403).json({ error: 'Your account is suspended. Contact admin@fuziverse.com' });
+    if (user.isSuspended || user.isBlocked) {
+      const daysLeft = user.scheduledDeleteAt
+        ? Math.max(0, Math.ceil((new Date(user.scheduledDeleteAt) - new Date()) / (24 * 60 * 60 * 1000)))
+        : 5;
+      return res.status(403).json({
+        error: `Your account has been blocked and scheduled for permanent deletion in ${daysLeft} day(s). Contact admin@fuziverse.com`,
+      });
     }
 
     const isMatch = await user.comparePassword(password);

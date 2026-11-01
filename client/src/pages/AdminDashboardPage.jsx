@@ -89,6 +89,75 @@ export default function AdminDashboardPage({ onNavigate }) {
     }
   };
 
+
+  const formatRemainingTime = (dateStr) => {
+    if (!dateStr) return '5 days';
+    const diff = new Date(dateStr) - new Date();
+    if (diff <= 0) return '0h (auto-deleting)';
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    if (days > 0) return `${days}d ${hours}h`;
+    return `${hours}h left`;
+  };
+
+  const handleToggleBlockTrack = async (trackId, trackTitle, isBlocked) => {
+    if (isBlocked) {
+      try {
+        const res = await api.unblockTrack(trackId);
+        setActionMsg(`✅ ${res.message}`);
+        setTracksList((prev) =>
+          prev.map((t) => (t._id === trackId ? { ...t, isBlocked: false, scheduledDeleteAt: null } : t))
+        );
+        loadAdminData();
+      } catch (err) {
+        setActionMsg('Error: ' + err.message);
+      }
+    } else {
+      if (!window.confirm(`⚠️ BLOCK SONG (5-DAY AUTO-DELETE):\nAre you sure you want to block "${trackTitle}"?\nIt will be hidden immediately and permanently deleted after 5 days.`)) {
+        return;
+      }
+      try {
+        const res = await api.blockTrack(trackId);
+        setActionMsg(`🔒 ${res.message}`);
+        setTracksList((prev) =>
+          prev.map((t) => (t._id === trackId ? { ...t, isBlocked: true, scheduledDeleteAt: res.track?.scheduledDeleteAt } : t))
+        );
+        loadAdminData();
+      } catch (err) {
+        setActionMsg('Error: ' + err.message);
+      }
+    }
+  };
+
+  const handleToggleBlockUser = async (userId, username, isBlocked) => {
+    if (isBlocked) {
+      try {
+        const res = await api.unblockUser(userId);
+        setActionMsg(`✅ ${res.message}`);
+        setUsersList((prev) =>
+          prev.map((u) => (u._id === userId ? { ...u, isBlocked: false, isSuspended: false, scheduledDeleteAt: null } : u))
+        );
+        loadAdminData();
+      } catch (err) {
+        setActionMsg('Error: ' + err.message);
+      }
+    } else {
+      if (!window.confirm(`⚠️ BLOCK USER ID (5-DAY AUTO-DELETE):\nAre you sure you want to block account @${username} (ID: ${userId})?\nAccount and all their songs will be hidden immediately and permanently deleted after 5 days.`)) {
+        return;
+      }
+      try {
+        const res = await api.blockUser(userId);
+        setActionMsg(`🔒 ${res.message}`);
+        setUsersList((prev) =>
+          prev.map((u) => (u._id === userId ? { ...u, isBlocked: true, isSuspended: true, scheduledDeleteAt: res.user?.scheduledDeleteAt } : u))
+        );
+        loadAdminData();
+      } catch (err) {
+        setActionMsg('Error: ' + err.message);
+      }
+    }
+  };
+
   // Block or Unblock (Suspend / Reactivate) User ID
   const handleToggleSuspend = async (userId, username, currentlySuspended) => {
     const actionWord = currentlySuspended ? 'UNBLOCK / REACTIVATE' : 'BLOCK / SUSPEND';
@@ -195,11 +264,14 @@ export default function AdminDashboardPage({ onNavigate }) {
           <span className="text-[10px] font-bold uppercase text-red-400 block mb-1">Pending Reports</span>
           <span className="text-2xl font-black text-red-300">{stats.pendingReports}</span>
         </div>
-        <div className="glass-panel rounded-2xl p-4 border border-cyan-500/30">
-          <span className="text-[10px] font-bold uppercase text-cyan-400 block mb-1">Blocked Accounts</span>
-          <span className="text-2xl font-black text-cyan-300">
-            {usersList.filter((u) => u.isSuspended).length}
+        <div className="glass-panel rounded-2xl p-4 border border-amber-500/30 bg-amber-950/15">
+          <span className="text-[10px] font-bold uppercase text-amber-400 block mb-1">5-Day Auto-Purge Queue</span>
+          <span className="text-2xl font-black text-amber-300">
+            {tracksList.filter((t) => t.isBlocked).length + usersList.filter((u) => u.isBlocked || u.isSuspended).length}
           </span>
+          <p className="text-[9px] text-zinc-400 mt-0.5">
+            {tracksList.filter((t) => t.isBlocked).length} songs • {usersList.filter((u) => u.isBlocked || u.isSuspended).length} accounts
+          </p>
         </div>
       </div>
 
@@ -286,7 +358,15 @@ export default function AdminDashboardPage({ onNavigate }) {
                             className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                           />
                           <div className="min-w-0">
-                            <p className="font-bold text-white truncate max-w-[180px] sm:max-w-xs">{track.title}</p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-bold text-white truncate max-w-[180px] sm:max-w-xs">{track.title}</p>
+                              {track.isBlocked && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                  <Clock className="w-2.5 h-2.5" />
+                                  Blocked (Deletes in {formatRemainingTime(track.scheduledDeleteAt)})
+                                </span>
+                              )}
+                            </div>
                             <span className="text-[10px] text-zinc-400 font-mono">
                               ID: {track._id}
                             </span>
@@ -330,13 +410,32 @@ export default function AdminDashboardPage({ onNavigate }) {
                             <Play className="w-3 h-3" />
                             <span className="hidden sm:inline">Play</span>
                           </button>
+                          {track.isBlocked ? (
+                            <button
+                              onClick={() => handleToggleBlockTrack(track._id, track.title, true)}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all"
+                              title="Unblock Song (Cancel 5-day deletion)"
+                            >
+                              <Unlock className="w-3.5 h-3.5" />
+                              <span>Unblock</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleBlockTrack(track._id, track.title, false)}
+                              className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black text-xs font-bold flex items-center gap-1.5 border border-amber-500/40 transition-all"
+                              title="Block Song (Auto-deletes permanently in 5 days)"
+                            >
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>Block (5 Days)</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDeleteTrack(track._id, track.title)}
-                            className="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white text-xs font-bold flex items-center gap-1.5 border border-red-500/30 transition-all"
-                            title="Permanently Delete Song"
+                            className="px-2.5 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white text-xs font-bold flex items-center gap-1 border border-red-500/30 transition-all"
+                            title="Permanently Delete Song Right Now"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                            <span>Delete Song</span>
+                            <span className="hidden sm:inline">Delete</span>
                           </button>
                         </div>
                       </td>
@@ -407,10 +506,13 @@ export default function AdminDashboardPage({ onNavigate }) {
                     </td>
                     <td className="p-3.5 text-zinc-300">{u.email}</td>
                     <td className="p-3.5">
-                      {u.isSuspended ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/40">
-                          <Lock className="w-3 h-3" /> Blocked / Suspended
-                        </span>
+                      {u.isBlocked || u.isSuspended ? (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 w-max">
+                            <Clock className="w-3 h-3" /> Blocked ({formatRemainingTime(u.scheduledDeleteAt)})
+                          </span>
+                          <span className="text-[9px] text-zinc-400">Auto-deletes after 5 days</span>
+                        </div>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-green-500/20 text-green-300 border border-green-500/40">
                           <Unlock className="w-3 h-3" /> Active
@@ -428,15 +530,15 @@ export default function AdminDashboardPage({ onNavigate }) {
                         </button>
                         {u.role !== 'admin' ? (
                           <button
-                            onClick={() => handleToggleSuspend(u._id, u.username, u.isSuspended)}
+                            onClick={() => handleToggleBlockUser(u._id, u.username, u.isBlocked || u.isSuspended)}
                             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                              u.isSuspended
-                                ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-500/20'
-                                : 'bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/40'
+                              u.isBlocked || u.isSuspended
+                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                                : 'bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black border border-amber-500/40'
                             }`}
                           >
-                            <UserX className="w-3.5 h-3.5" />
-                            <span>{u.isSuspended ? 'Unblock ID' : 'Block ID'}</span>
+                            {u.isBlocked || u.isSuspended ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                            <span>{u.isBlocked || u.isSuspended ? 'Unblock ID' : 'Block ID (5 Days)'}</span>
                           </button>
                         ) : (
                           <span className="text-[10px] text-zinc-500 italic px-2">Protected</span>

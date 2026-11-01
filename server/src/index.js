@@ -29,6 +29,7 @@ import socialRoutes from './routes/social.js';
 import adminRoutes from './routes/admin.js';
 import analyticsRoutes from './routes/analytics.js';
 import { streamFromGridFS, syncSeedUploadsToGridFS } from './services/gridfsService.js';
+import { runAutoPurge } from './services/autoPurgeService.js';
 
 dotenv.config();
 
@@ -218,6 +219,14 @@ async function startServer() {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 FUZI VERSE Server running on http://localhost:${PORT}`);
       console.log(`🎵 Audio uploads served from http://localhost:${PORT}/uploads`);
+
+      // Initial auto-purge check on startup
+      runAutoPurge().catch((e) => console.warn('[AutoPurge Initial]', e.message));
+
+      // Scheduled auto-purge every 30 minutes for 5-day expired blocked items
+      setInterval(() => {
+        runAutoPurge().catch((e) => console.warn('[AutoPurge Interval]', e.message));
+      }, 30 * 60 * 1000);
     });
   } catch (err) {
     console.error('Failed to start server:', err);

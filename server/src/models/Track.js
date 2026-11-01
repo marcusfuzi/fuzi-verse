@@ -105,6 +105,18 @@ const trackSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    blockedAt: {
+      type: Date,
+      default: null,
+    },
+    scheduledDeleteAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

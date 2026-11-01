@@ -39,7 +39,7 @@ router.get('/', optionalAuth, async (req, res) => {
       limit = 20,
     } = req.query;
 
-    const query = { isPublic: true };
+    const query = { isPublic: true, isBlocked: { $ne: true } };
 
     if (genre && genre !== 'All') {
       query.genre = genre;

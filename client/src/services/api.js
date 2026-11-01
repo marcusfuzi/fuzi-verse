@@ -116,4 +116,8 @@ export const api = {
   getAdminTracks: (query = '') => request(`/admin/tracks${query ? `?q=${encodeURIComponent(query)}` : ''}`),
   adminDeleteTrack: (trackId) => request(`/admin/tracks/${trackId}`, { method: 'DELETE' }),
   toggleSuspendUser: (userId) => request(`/admin/users/${userId}/toggle-suspend`, { method: 'POST' }),
+  blockTrack: (trackId) => request(`/admin/tracks/${trackId}/block`, { method: 'POST' }),
+  unblockTrack: (trackId) => request(`/admin/tracks/${trackId}/unblock`, { method: 'POST' }),
+  blockUser: (userId) => request(`/admin/users/${userId}/block`, { method: 'POST' }),
+  unblockUser: (userId) => request(`/admin/users/${userId}/unblock`, { method: 'POST' }),
 };

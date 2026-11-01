@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/creators', optionalAuth, async (req, res) => {
   try {
     const { search, limit = 12 } = req.query;
-    const query = { isSuspended: false };
+    const query = { isSuspended: false, isBlocked: { $ne: true } };
 
     if (search && search.trim()) {
       const cleanTerm = search.trim();
