@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
   Play,
@@ -12,6 +12,10 @@ import {
   Sparkles,
   TrendingUp,
   Share2,
+  ChevronLeft,
+  ChevronRight,
+  Disc,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePlayer } from '../context/PlayerContext.jsx';
@@ -97,48 +101,111 @@ export default function HomePage({
         <span className="text-xs sm:text-sm font-medium">Search any song title, artist name, beats, or lyrics...</span>
       </div>
 
-      {/* Featured Track Hero Banner */}
-      {featuredTrack && (
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-zinc-900 via-[#13151f] to-[#1a1528] border border-white/[0.08] p-6 sm:p-8 shadow-xl">
-          {/* Subtle album art reflection background */}
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-15 blur-2xl pointer-events-none"
-            style={{ backgroundImage: `url(${featuredTrack.coverArtUrl})` }}
-          />
+      {/* Dynamic Animated Hero Carousel with Shifting Ambient Lighting */}
+      {activeHeroTrack && (
+        <div
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="relative rounded-3xl overflow-hidden border border-white/[0.12] p-6 sm:p-9 shadow-2xl transition-all duration-1000 group select-none"
+          style={{
+            background: `linear-gradient(135deg, ${currentTheme.glowAura} 0%, rgba(12, 13, 20, 0.95) 75%)`,
+          }}
+        >
+          {/* Dynamic Ambient Background Blur Image (Changes with smooth 1000ms transition) */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <img
+              key={activeHeroTrack._id}
+              src={activeHeroTrack.coverArtUrl}
+              alt=""
+              className="w-full h-full object-cover scale-150 blur-[90px] opacity-40 brightness-75 transition-all duration-1000 animate-fade-in"
+            />
+            {/* Shifting Colorful Neon Lighting Spheres */}
+            <div className={`absolute -top-24 -left-24 w-80 h-80 ${currentTheme.glowOrb1} rounded-full blur-[100px] transition-all duration-1000 animate-pulse`} />
+            <div className={`absolute -bottom-24 right-1/4 w-96 h-96 ${currentTheme.glowOrb2} rounded-full blur-[120px] transition-all duration-1000`} />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#08090d] via-black/40 to-black/20" />
+          </div>
 
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
-            {/* Left Content */}
-            <div className="max-w-xl text-center md:text-left">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-zinc-300 text-[11px] font-semibold tracking-wide mb-3">
-                <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
-                Featured Release
-              </span>
+          {/* Left / Right Slide Navigation Chevrons */}
+          {heroTracks.length > 1 && (
+            <>
+              <button
+                onClick={handlePrevSlide}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-white/80 hover:text-white border border-white/10 hover:border-white/30 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-200 active:scale-95 shadow-xl hidden sm:flex items-center justify-center"
+                title="Previous Song"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleNextSlide}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-white/80 hover:text-white border border-white/10 hover:border-white/30 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-200 active:scale-95 shadow-xl hidden sm:flex items-center justify-center"
+                title="Next Song"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
 
-              <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-                {featuredTrack.title}
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-10">
+            {/* Left Content (Animated with Key Transition) */}
+            <div key={`content-${activeHeroTrack._id}`} className="max-w-xl text-center md:text-left animate-fade-in">
+              {/* Dynamic Theme Badge */}
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide border shadow-sm backdrop-blur-md transition-all duration-500 ${currentTheme.badgeBg}`}>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {currentTheme.tag}
+                </span>
+                <span className="text-[10px] text-zinc-400 font-bold px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                  {activeHeroIndex + 1} / {heroTracks.length}
+                </span>
+              </div>
+
+              {/* Song Title with Dynamic Text Glow */}
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight drop-shadow-md">
+                {activeHeroTrack.title}
               </h2>
 
-              <p
-                onClick={() => onNavigate('profile', featuredTrack.artist?._id || featuredTrack.artist)}
-                className="text-sm font-medium text-zinc-300 mt-2 cursor-pointer hover:text-white transition-colors"
-              >
-                by <strong className="text-purple-300 hover:underline">{featuredTrack.artistName}</strong>
-              </p>
+              {/* Artist Name & Stats */}
+              <div className="mt-2.5 flex items-center justify-center md:justify-start gap-3 flex-wrap">
+                <p
+                  onClick={() => onNavigate('profile', activeHeroTrack.artist?._id || activeHeroTrack.artist)}
+                  className="text-sm font-semibold text-zinc-300 cursor-pointer hover:text-white transition-colors"
+                >
+                  by <strong className="hover:underline" style={{ color: currentTheme.accentColor }}>{activeHeroTrack.artistName}</strong>
+                </p>
+                <span className="text-zinc-600">•</span>
+                <span className="text-xs text-zinc-400 font-medium flex items-center gap-1">
+                  <Headphones className="w-3 h-3 text-zinc-500" />
+                  {activeHeroTrack.playsCount || 0} plays
+                </span>
+                {activeHeroTrack.likesCount > 0 && (
+                  <>
+                    <span className="text-zinc-600">•</span>
+                    <span className="text-xs text-rose-400 font-medium flex items-center gap-1">
+                      <Heart className="w-3 h-3 fill-rose-500" />
+                      {activeHeroTrack.likesCount}
+                    </span>
+                  </>
+                )}
+              </div>
 
-              <p className="text-xs text-zinc-400 mt-3 leading-relaxed line-clamp-2">
-                {featuredTrack.description || 'Listen to this track now on Fuzi Verse.'}
+              <p className="text-xs sm:text-sm text-zinc-300/80 mt-3.5 leading-relaxed line-clamp-2 max-w-lg">
+                {activeHeroTrack.description || 'Streaming now in studio HD audio quality on Fuzi Verse.'}
               </p>
 
               {/* Action Buttons */}
-              <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <div className="mt-7 flex flex-wrap items-center justify-center md:justify-start gap-3.5">
                 <button
                   onClick={() => {
-                    if (isFeaturedPlaying) togglePlay();
-                    else playTrack(featuredTrack, tracks);
+                    if (isHeroPlaying) togglePlay();
+                    else playTrack(activeHeroTrack, tracks);
                   }}
-                  className="px-6 py-2.5 rounded-full text-xs font-bold bg-white text-black hover:bg-zinc-200 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-lg"
+                  className="px-7 py-3 rounded-full text-xs font-bold text-black hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-xl cursor-pointer"
+                  style={{
+                    backgroundColor: '#ffffff',
+                    boxShadow: `0 8px 30px ${currentTheme.glowAura}`,
+                  }}
                 >
-                  {isFeaturedPlaying ? (
+                  {isHeroPlaying ? (
                     <>
                       <Pause className="w-4 h-4 fill-black" />
                       <span>Pause</span>
@@ -152,37 +219,96 @@ export default function HomePage({
                 </button>
 
                 <button
-                  onClick={() => onOpenAddToPlaylist?.(featuredTrack)}
-                  className="px-4 py-2.5 rounded-full text-xs font-semibold bg-white/5 border border-white/10 hover:border-white/30 text-zinc-200 transition-colors"
+                  onClick={() => onOpenAddToPlaylist?.(activeHeroTrack)}
+                  className="px-5 py-3 rounded-full text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/15 text-white backdrop-blur-md transition-all active:scale-95"
                 >
                   Save to Playlist
                 </button>
 
                 <button
-                  onClick={() => onOpenShare?.(featuredTrack)}
-                  className="p-2.5 rounded-full bg-white/5 border border-white/10 hover:border-white/30 text-zinc-300 hover:text-white transition-colors"
-                  title="Share"
+                  onClick={() => onOpenShare?.(activeHeroTrack)}
+                  className="p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-zinc-200 hover:text-white backdrop-blur-md transition-all active:scale-95"
+                  title="Share Track"
                 >
                   <Share2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Right Album Artwork */}
-            <div className="relative flex-shrink-0 group">
-              <div className="w-44 h-44 sm:w-52 sm:h-52 rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-zinc-900">
+            {/* Right Album Artwork with Vinyl Float Effect */}
+            <div
+              key={`art-${activeHeroTrack._id}`}
+              onClick={() => {
+                if (isHeroPlaying) togglePlay();
+                else playTrack(activeHeroTrack, tracks);
+              }}
+              className="relative flex-shrink-0 group cursor-pointer animate-fade-in"
+            >
+              {/* Spinning Disc Aura behind artwork when playing */}
+              {isHeroPlaying && (
+                <div className="absolute -inset-2.5 rounded-full bg-gradient-to-tr from-purple-500/40 via-amber-400/40 to-emerald-400/40 blur-xl animate-spin-slow opacity-80" />
+              )}
+
+              <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-3xl overflow-hidden shadow-2xl border-2 border-white/20 bg-zinc-900 group-hover:scale-105 transition-all duration-500">
                 <img
-                  src={featuredTrack.coverArtUrl}
-                  alt={featuredTrack.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  src={activeHeroTrack.coverArtUrl}
+                  alt={activeHeroTrack.title}
+                  className="w-full h-full object-cover"
                 />
+
+                {/* Hover Play Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
+                  <div className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-xl transform scale-75 group-hover:scale-100 transition-transform">
+                    {isHeroPlaying ? <Pause className="w-5 h-5 fill-black" /> : <Play className="w-5 h-5 fill-black ml-0.5" />}
+                  </div>
+                </div>
               </div>
-              <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-[11px] font-medium text-white px-2.5 py-1 rounded-xl bg-black/60 backdrop-blur-md">
-                <span>{featuredTrack.genre || 'Music'}</span>
-                <span>{formatTime(featuredTrack.duration)}</span>
+
+              {/* Bottom Badge Bar */}
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] font-bold text-white px-3 py-1.5 rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 shadow-lg">
+                <span className="capitalize">{activeHeroTrack.genre || 'Music'}</span>
+                <span>{formatTime(activeHeroTrack.duration)}</span>
               </div>
             </div>
           </div>
+
+          {/* Interactive Slide Progress Indicators (Stories Style) */}
+          {heroTracks.length > 1 && (
+            <div className="relative z-20 mt-8 pt-4 border-t border-white/10 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2 flex-1 max-w-md">
+                {heroTracks.map((ht, idx) => {
+                  const isActive = idx === activeHeroIndex;
+                  return (
+                    <button
+                      key={ht._id}
+                      onClick={() => setActiveHeroIndex(idx)}
+                      className={`h-1.5 rounded-full transition-all duration-300 relative overflow-hidden ${
+                        isActive ? 'flex-1 bg-white/40' : 'w-5 bg-white/15 hover:bg-white/30'
+                      }`}
+                      title={ht.title}
+                    >
+                      {isActive && (
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            backgroundColor: currentTheme.accentColor,
+                            width: '100%',
+                            boxShadow: `0 0 10px ${currentTheme.accentColor}`,
+                          }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Slide Counter & Pause Status */}
+              <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-medium">
+                {isHovered && <span className="text-amber-400 font-bold">⏸ Paused</span>}
+                <span>Auto-playing in studio sound</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
