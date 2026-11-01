@@ -62,9 +62,10 @@ export default function ExplorePage({
           mood: mood !== 'All' ? mood : undefined,
           limit: 40,
         }),
-        query
-          ? api.getFeaturedCreators({ search: query, limit: 6 })
-          : Promise.resolve({ creators: [] }),
+        api.getFeaturedCreators({
+          search: query || undefined,
+          limit: 12,
+        }),
       ]);
 
       setTracks(tracksRes.tracks || []);

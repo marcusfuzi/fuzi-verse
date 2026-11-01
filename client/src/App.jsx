@@ -49,19 +49,35 @@ function AppContent() {
   const [playlists, setPlaylists] = useState([]);
   const [historyTracks, setHistoryTracks] = useState([]);
 
-  // Load initial catalog data
-  useEffect(() => {
-    api.getTracks({ limit: 20 })
+    const refreshCatalog = () => {
+    api.getTracks({ limit: 50 })
       .then((res) => setTracks(res.tracks || []))
       .catch((e) => console.warn(e));
 
-    api.getFeaturedCreators()
+    api.getFeaturedCreators({ limit: 20 })
       .then((res) => setCreators(res.creators || []))
       .catch((e) => console.warn(e));
 
     api.getPlaylists()
       .then((res) => setPlaylists(res.playlists || []))
       .catch((e) => console.warn(e));
+  };
+
+  // Load initial catalog data & real-time auto-refresh for new uploads/IDs
+  useEffect(() => {
+    refreshCatalog();
+
+    // Refresh when user switches back to tab
+    const handleFocus = () => refreshCatalog();
+    window.addEventListener('focus', handleFocus);
+
+    // Periodic silent refresh every 45s so all users see new songs & creators in real time
+    const interval = setInterval(refreshCatalog, 45000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
   }, []);
 
   // If user logs in, load history
@@ -179,6 +195,10 @@ function AppContent() {
   const navigate = (route, param = null) => {
     if (route === currentRoute && param === routeParam) return;
 
+    if (route === 'home' || route === 'explore') {
+      refreshCatalog();
+    }
+
     if (isNowPlayingOpenRef.current) closeNowPlaying();
     setShareItem(null);
     setAddToPlaylistTrack(null);
@@ -266,7 +286,13 @@ function AppContent() {
           )}
 
           {currentRoute === 'upload' && (
-            <UploadPage onNavigate={navigate} />
+            <UploadPage
+              onNavigate={navigate}
+              onTrackUploaded={(newTrack) => {
+                setTracks((prev) => [newTrack, ...prev.filter((t) => t._id !== newTrack._id)]);
+                refreshCatalog();
+              }}
+            />
           )}
 
           {(currentRoute === 'profile' || currentRoute === 'artist') && (

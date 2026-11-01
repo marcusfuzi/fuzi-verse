@@ -15,7 +15,7 @@ import { api } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePlayer } from '../context/PlayerContext.jsx';
 
-export default function UploadPage({ onNavigate }) {
+export default function UploadPage({ onNavigate, onTrackUploaded }) {
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const { playTrack } = usePlayer();
 
@@ -126,6 +126,9 @@ export default function UploadPage({ onNavigate }) {
       const res = await api.uploadTrack(formData);
       setProgress(100);
       setSuccessTrack(res.track);
+      if (res.track) {
+        onTrackUploaded?.(res.track);
+      }
     } catch (err) {
       setError(err.message || 'Failed to upload track');
     } finally {

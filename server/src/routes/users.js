@@ -26,7 +26,7 @@ router.get('/creators', optionalAuth, async (req, res) => {
 
     const creators = await User.find(query)
       .select('displayName username avatar bio followersCount totalPlays isVerified role')
-      .sort({ followersCount: -1, totalPlays: -1 })
+      .sort({ createdAt: -1, followersCount: -1 })
       .limit(parseInt(limit));
 
     let followedUserIds = new Set();

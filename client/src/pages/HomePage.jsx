@@ -205,7 +205,7 @@ export default function HomePage({
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {creators.slice(0, 4).map((creator) => {
+            {creators.slice(0, 8).map((creator) => {
               const isFollowed = followingMap[creator._id] ?? creator.isFollowing;
               return (
                 <div
@@ -277,9 +277,9 @@ export default function HomePage({
           <div>
             <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
               <Flame className="w-5 h-5 text-orange-400" />
-              <span>Trending Now</span>
+              <span>Fresh Releases & Trending Tracks</span>
             </h3>
-            <p className="text-xs text-zinc-400 mt-0.5">Most streamed independent tracks</p>
+            <p className="text-xs text-zinc-400 mt-0.5">New uploads and popular independent releases</p>
           </div>
           <button
             onClick={() => onNavigate('explore')}

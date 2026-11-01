@@ -2,11 +2,22 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-const audioDir = path.resolve('uploads/audio');
-const coversDir = path.resolve('uploads/covers');
+// Determine unified uploads directory so multer and static express always match
+const baseUploadsDir = fs.existsSync(path.resolve('server/uploads'))
+  ? path.resolve('server/uploads')
+  : path.resolve('uploads');
+
+const audioDir = path.join(baseUploadsDir, 'audio');
+const coversDir = path.join(baseUploadsDir, 'covers');
 
 if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir, { recursive: true });
 if (!fs.existsSync(coversDir)) fs.mkdirSync(coversDir, { recursive: true });
+
+// Also ensure fallback root upload dirs exist
+try {
+  fs.mkdirSync(path.resolve('uploads/audio'), { recursive: true });
+  fs.mkdirSync(path.resolve('uploads/covers'), { recursive: true });
+} catch (e) {}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

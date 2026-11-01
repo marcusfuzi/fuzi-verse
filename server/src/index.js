@@ -32,7 +32,9 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5050;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/fuzi_verse';
+const MONGO_URI =
+  process.env.MONGO_URI ||
+  'mongodb+srv://tusharsinghbist00:iC4vnmQjI8Tt3Pii@cluster0.qhvrmhm.mongodb.net/fuzi_verse?retryWrites=true&w=majority';
 
 // Middlewares
 app.use(
@@ -45,15 +47,12 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve uploaded audio and covers
-const possibleUploadDirs = [
-  path.resolve('server/uploads'),
-  path.resolve('uploads'),
-  path.resolve(__dirname, '..', 'uploads'),
-  path.resolve(__dirname, '..', '..', 'server', 'uploads'),
-];
-const uploadsDir = possibleUploadDirs.find((d) => fs.existsSync(d)) || path.resolve('server/uploads');
-app.use('/uploads', express.static(uploadsDir));
+// Serve uploaded audio and covers from all possible upload locations (ensures 0% 404 on uploads)
+app.use('/uploads', express.static(path.resolve('server/uploads')));
+app.use('/uploads', express.static(path.resolve('uploads')));
+app.use('/uploads', express.static(path.resolve(__dirname, '..', 'uploads')));
+app.use('/uploads', express.static(path.resolve(__dirname, '..', '..', 'uploads')));
+app.use('/uploads', express.static(path.resolve(__dirname, '..', '..', 'server', 'uploads')));
 
 // Mount API routes
 app.use('/api/auth', authRoutes);
