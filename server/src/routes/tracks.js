@@ -56,14 +56,28 @@ router.get('/', optionalAuth, async (req, res) => {
       query.isFeatured = true;
     }
 
-    if (search) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+        if (search && search.trim()) {
+      const cleanTerm = search.trim();
+      const escaped = cleanTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escaped, 'i');
+
+      // Also find users whose displayName or username matches the search query
+      const matchingUsers = await User.find({
+        $or: [
+          { displayName: searchRegex },
+          { username: searchRegex },
+        ],
+      }).select('_id');
+      const matchingUserIds = matchingUsers.map((u) => u._id);
+
       query.$or = [
         { title: searchRegex },
         { artistName: searchRegex },
+        { artist: { $in: matchingUserIds } },
         { description: searchRegex },
         { tags: searchRegex },
         { genre: searchRegex },
+        { lyrics: searchRegex },
       ];
     }
 

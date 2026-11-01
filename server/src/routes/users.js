@@ -7,13 +7,27 @@ import { optionalAuth, requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// GET /api/users/creators - Featured and emerging creators
+// GET /api/users/creators - Featured and emerging creators (supports search)
 router.get('/creators', optionalAuth, async (req, res) => {
   try {
-    const creators = await User.find({ isSuspended: false })
+    const { search, limit = 12 } = req.query;
+    const query = { isSuspended: false };
+
+    if (search && search.trim()) {
+      const cleanTerm = search.trim();
+      const escaped = cleanTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escaped, 'i');
+      query.$or = [
+        { displayName: searchRegex },
+        { username: searchRegex },
+        { bio: searchRegex },
+      ];
+    }
+
+    const creators = await User.find(query)
       .select('displayName username avatar bio followersCount totalPlays isVerified role')
       .sort({ followersCount: -1, totalPlays: -1 })
-      .limit(12);
+      .limit(parseInt(limit));
 
     let followedUserIds = new Set();
     if (req.user) {

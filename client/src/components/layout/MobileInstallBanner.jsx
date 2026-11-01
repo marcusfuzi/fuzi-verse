@@ -11,7 +11,10 @@ export default function MobileInstallBanner() {
 
   useEffect(() => {
     // Check if already launched as installed standalone PWA app
-    const isApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const isApp =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone ||
+      localStorage.getItem('fuzi_app_installed') === 'true';
     if (isApp) {
       setIsStandalone(true);
       return;
@@ -28,6 +31,14 @@ export default function MobileInstallBanner() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
+    const handleAppInstalled = () => {
+      localStorage.setItem('fuzi_app_installed', 'true');
+      setIsStandalone(true);
+      setShowBanner(false);
+      window.dispatchEvent(new Event('fuzi-app-installed'));
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
+
     // If mobile device and not dismissed, show banner after short delay
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile && !sessionStorage.getItem('fuzi_dismiss_install')) {
@@ -39,6 +50,7 @@ export default function MobileInstallBanner() {
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -47,6 +59,8 @@ export default function MobileInstallBanner() {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       if (choice.outcome === 'accepted') {
+        localStorage.setItem('fuzi_app_installed', 'true');
+        window.dispatchEvent(new Event('fuzi-app-installed'));
         setShowBanner(false);
       }
       setDeferredPrompt(null);

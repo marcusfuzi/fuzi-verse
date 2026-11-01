@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Search,
   Play,
   Pause,
   Flame,
@@ -85,6 +86,15 @@ export default function HomePage({
             Stream new releases, indie tracks, and curated sounds.
           </p>
         </div>
+      </div>
+
+      {/* Quick Search Bar */}
+      <div
+        onClick={() => onNavigate('explore')}
+        className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl bg-[#0c1017]/90 hover:bg-[#121824] border border-white/10 hover:border-amber-400/50 text-zinc-400 hover:text-white cursor-pointer shadow-xl transition-all group select-none active:scale-[0.99]"
+      >
+        <Search className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+        <span className="text-xs sm:text-sm font-medium">Search any song title, artist name, beats, or lyrics...</span>
       </div>
 
       {/* Featured Track Hero Banner */}

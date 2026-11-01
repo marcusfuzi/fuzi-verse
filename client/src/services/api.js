@@ -79,7 +79,10 @@ export const api = {
   deletePlaylist: (id) => request(`/playlists/${id}`, { method: 'DELETE' }),
 
   // Users & Creators
-  getFeaturedCreators: () => request('/users/creators'),
+  getFeaturedCreators: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/users/creators${query ? `?${query}` : ''}`);
+  },
   getUserProfile: (usernameOrId) => request(`/users/${usernameOrId}`),
 
   // Comments

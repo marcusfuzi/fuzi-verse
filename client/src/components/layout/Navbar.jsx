@@ -21,6 +21,28 @@ import FuziLogoOfficial from '../ui/FuziLogoOfficial.jsx';
 export default function Navbar({ onNavigate, currentRoute, onSearch, onOpenDownload }) {
   const { user, isAuthenticated, isAdmin, logout, openAuthModal } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAppInstalled, setIsAppInstalled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.matchMedia?.('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true ||
+      document.referrer.includes('android-app://') ||
+      localStorage.getItem('fuzi_app_installed') === 'true'
+    );
+  });
+
+  useEffect(() => {
+    const handleInstalled = () => {
+      localStorage.setItem('fuzi_app_installed', 'true');
+      setIsAppInstalled(true);
+    };
+    window.addEventListener('appinstalled', handleInstalled);
+    window.addEventListener('fuzi-app-installed', handleInstalled);
+    return () => {
+      window.removeEventListener('appinstalled', handleInstalled);
+      window.removeEventListener('fuzi-app-installed', handleInstalled);
+    };
+  }, []);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -100,15 +122,27 @@ export default function Navbar({ onNavigate, currentRoute, onSearch, onOpenDownl
 
       {/* Actions & Profile */}
       <div className="flex items-center gap-2.5">
-        {/* Get ↗ App Download Button */}
+        {/* Mobile Quick Search Button */}
         <button
-          onClick={onOpenDownload}
-          className="bg-[#f59e0b] hover:bg-[#fbbf24] text-black px-4 py-2 rounded-full text-xs font-black flex items-center gap-1.5 shadow-lg shadow-amber-500/25 hover:scale-105 active:scale-95 transition-all"
-          title="Download FUZI VERSE App"
+          onClick={() => onNavigate('explore')}
+          className="md:hidden p-2 rounded-full bg-zinc-900 border border-white/10 text-zinc-300 hover:text-white transition-all active:scale-95"
+          aria-label="Search"
+          title="Search songs and artists"
         >
-          <span>Get</span>
-          <span className="text-[11px] font-black">↗</span>
+          <Search className="w-4 h-4 text-amber-400" />
         </button>
+
+        {/* Get ↗ App Download Button - Hidden when app is downloaded/installed */}
+        {!isAppInstalled && (
+          <button
+            onClick={onOpenDownload}
+            className="bg-[#f59e0b] hover:bg-[#fbbf24] text-black px-4 py-2 rounded-full text-xs font-black flex items-center gap-1.5 shadow-lg shadow-amber-500/25 hover:scale-105 active:scale-95 transition-all"
+            title="Download FUZI VERSE App"
+          >
+            <span>Get</span>
+            <span className="text-[11px] font-black">↗</span>
+          </button>
+        )}
 
         {/* Upload Button */}
         <button
