@@ -46,9 +46,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve uploaded audio and covers
-const uploadsDir = fs.existsSync(path.resolve('uploads'))
-  ? path.resolve('uploads')
-  : path.resolve(__dirname, '..', 'uploads');
+const possibleUploadDirs = [
+  path.resolve('server/uploads'),
+  path.resolve('uploads'),
+  path.resolve(__dirname, '..', 'uploads'),
+  path.resolve(__dirname, '..', '..', 'server', 'uploads'),
+];
+const uploadsDir = possibleUploadDirs.find((d) => fs.existsSync(d)) || path.resolve('server/uploads');
 app.use('/uploads', express.static(uploadsDir));
 
 // Mount API routes
@@ -120,8 +124,13 @@ app.get('/api/network-info', async (req, res) => {
 });
 
 // Serve frontend client in production (when client/dist exists)
-const clientDistPath = path.resolve(__dirname, '..', '..', 'client', 'dist');
-if (fs.existsSync(clientDistPath)) {
+const possibleDistDirs = [
+  path.resolve('client/dist'),
+  path.resolve(__dirname, '..', '..', 'client', 'dist'),
+  path.resolve('dist'),
+];
+const clientDistPath = possibleDistDirs.find((d) => fs.existsSync(d));
+if (clientDistPath) {
   app.use(express.static(clientDistPath));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
