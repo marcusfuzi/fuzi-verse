@@ -10,7 +10,7 @@ cd /d "D:\fuzi verse"
 "%USERPROFILE%\MinGit\cmd\git.exe" push -u origin main
 echo.
 echo =======================================================
-echo  If it says 'Everything up-to-date' or 'Branch main', 
-echo  it is uploaded successfully!
+echo  Finished! Check your repo on GitHub:
+echo  https://github.com/marcusfuzi/fuzi-verse
 echo =======================================================
 pause
