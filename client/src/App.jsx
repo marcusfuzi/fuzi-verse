@@ -31,6 +31,7 @@ import MobileInstallBanner from './components/layout/MobileInstallBanner.jsx';
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
+  const { currentTrack } = usePlayer();
   const [currentRoute, setCurrentRoute] = useState('home');
   const [routeParam, setRouteParam] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -109,7 +110,7 @@ function AppContent() {
         )}
 
         {/* Main Routed Content Area */}
-        <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-6">
+        <main className={`flex-1 min-w-0 px-4 sm:px-6 lg:px-8 pt-6 ${currentTrack ? 'pb-44 sm:pb-36 lg:pb-28' : 'pb-24 lg:pb-12'}`}>
           {currentRoute === 'landing' && (
             <LandingPage
               onNavigate={navigate}

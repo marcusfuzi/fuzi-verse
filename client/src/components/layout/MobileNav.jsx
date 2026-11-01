@@ -14,11 +14,11 @@ export default function MobileNav({ currentRoute, onNavigate }) {
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-3 left-4 right-4 z-40 bg-[#0e121b]/90 backdrop-blur-xl border border-white/10 rounded-3xl px-4 py-2 flex items-center justify-between shadow-2xl shadow-black/80">
+    <nav className="lg:hidden fixed bottom-2 left-3 right-3 sm:left-6 sm:right-6 max-w-md mx-auto z-40 bg-[#0c1017]/95 backdrop-blur-xl border border-white/10 rounded-2xl px-3 py-1.5 flex items-center justify-between shadow-2xl shadow-black/90 select-none">
       {/* Home / Feed */}
       <button
         onClick={() => onNavigate('home')}
-        className={`flex flex-col items-center justify-center p-2 rounded-2xl transition-all ${
+        className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
           currentRoute === 'home' ? 'text-amber-400' : 'text-zinc-500 hover:text-zinc-300'
         }`}
         aria-label="Feed"
@@ -29,7 +29,7 @@ export default function MobileNav({ currentRoute, onNavigate }) {
       {/* Explore / Search */}
       <button
         onClick={() => onNavigate('explore')}
-        className={`flex flex-col items-center justify-center p-2 rounded-2xl transition-all ${
+        className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
           currentRoute === 'explore' ? 'text-amber-400' : 'text-zinc-500 hover:text-zinc-300'
         }`}
         aria-label="Explore"
@@ -40,16 +40,16 @@ export default function MobileNav({ currentRoute, onNavigate }) {
       {/* Central Elevated Gold Action Button (+) */}
       <button
         onClick={handleUploadClick}
-        className="relative -top-4 w-12 h-12 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 text-black flex items-center justify-center shadow-lg shadow-amber-500/40 hover:scale-110 active:scale-95 transition-transform"
+        className="relative -top-2.5 w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 text-black flex items-center justify-center shadow-lg shadow-amber-500/40 hover:scale-110 active:scale-95 transition-transform flex-shrink-0"
         aria-label="Upload Music"
       >
-        <Plus className="w-6 h-6 stroke-[2.5]" />
+        <Plus className="w-5 h-5 stroke-[2.5]" />
       </button>
 
       {/* Beat Tools / Globe */}
       <button
         onClick={() => onNavigate('create')}
-        className={`flex flex-col items-center justify-center p-2 rounded-2xl transition-all ${
+        className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
           currentRoute === 'create' ? 'text-amber-400' : 'text-zinc-500 hover:text-zinc-300'
         }`}
         aria-label="Beat Tools"
@@ -60,7 +60,7 @@ export default function MobileNav({ currentRoute, onNavigate }) {
       {/* Library */}
       <button
         onClick={() => onNavigate('library')}
-        className={`flex flex-col items-center justify-center p-2 rounded-2xl transition-all ${
+        className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
           currentRoute === 'library' ? 'text-amber-400' : 'text-zinc-500 hover:text-zinc-300'
         }`}
         aria-label="Library"
