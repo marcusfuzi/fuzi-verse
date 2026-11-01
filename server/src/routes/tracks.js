@@ -50,7 +50,12 @@ router.get('/', optionalAuth, async (req, res) => {
     }
 
     if (trending === 'true') {
-      query.isTrending = true;
+      // Find tracks marked trending or sort by highest plays and likes so trending is never empty
+      const hasMarked = await Track.exists({ ...query, isTrending: true });
+      if (hasMarked) {
+        query.isTrending = true;
+      }
+      sortQuery = { playsCount: -1, likesCount: -1, createdAt: -1 };
     }
 
     if (featured === 'true') {

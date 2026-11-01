@@ -19,7 +19,12 @@ router.get('/', optionalAuth, async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(20);
 
-    return res.json({ playlists });
+    const cleanPlaylists = playlists.map((pl) => {
+      const obj = pl.toObject();
+      obj.tracks = (obj.tracks || []).filter(Boolean);
+      return obj;
+    });
+    return res.json({ playlists: cleanPlaylists });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -55,7 +60,9 @@ router.get('/:id', optionalAuth, async (req, res) => {
       return res.status(403).json({ error: 'This playlist is private.' });
     }
 
-    return res.json({ playlist });
+    const obj = playlist.toObject();
+    obj.tracks = (obj.tracks || []).filter(Boolean);
+    return res.json({ playlist: obj });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
