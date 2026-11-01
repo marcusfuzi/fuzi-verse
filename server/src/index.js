@@ -6,9 +6,15 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import dns from 'dns';
 import { fileURLToPath } from 'url';
 import QRCode from 'qrcode';
 import { runSeed } from './seeds/seed.js';
+
+// Ensure DNS resolvers handle MongoDB Atlas SRV records smoothly
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+} catch (e) {}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
