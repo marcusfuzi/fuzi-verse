@@ -93,7 +93,7 @@ export function PlayerProvider({ children }) {
     nextTrack();
   };
 
-  const playTrack = (track, newQueue = null) => {
+  const playTrack = (track, newQueue = null, autoOpenModal = true) => {
     if (!track) return;
     setAudioError(null);
 
@@ -123,6 +123,9 @@ export function PlayerProvider({ children }) {
     }
 
     setCurrentTrack(track);
+    if (autoOpenModal !== false) {
+      setIsNowPlayingOpen(true);
+    }
 
     if (audioRef.current) {
       audioRef.current.src = track.audioUrl;
