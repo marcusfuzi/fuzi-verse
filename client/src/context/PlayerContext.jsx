@@ -316,6 +316,17 @@ export function PlayerProvider({ children }) {
     setQueueIndex(-1);
   };
 
+  // Synchronize Now Playing fullscreen state with browser history
+  useEffect(() => {
+    if (isNowPlayingOpen) {
+      if (window.history?.state?.layer !== 'player') {
+        try {
+          window.history.pushState({ ...window.history?.state, layer: 'player' }, '');
+        } catch (e) {}
+      }
+    }
+  }, [isNowPlayingOpen]);
+
   const openNowPlaying = (tab = null) => {
     if (tab) setNowPlayingTab(tab);
     setIsNowPlayingOpen(true);

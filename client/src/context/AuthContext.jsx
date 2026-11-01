@@ -80,7 +80,13 @@ export function AuthProvider({ children }) {
     setAuthModalOpen(true);
   };
 
-  const closeAuthModal = () => {
+  const closeAuthModal = (fromPopState = false) => {
+    if (!fromPopState && window.history?.state?.layer === 'modal') {
+      try {
+        window.history.back();
+        return;
+      } catch (e) {}
+    }
     setAuthModalOpen(false);
   };
 

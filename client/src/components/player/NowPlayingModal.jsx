@@ -73,6 +73,76 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
 
   const lyricsContainerRef = useRef(null);
 
+  // Drawer state refs for popstate interception
+  const lyricsExpandedRef = useRef(lyricsExpanded);
+  const showNotesDrawerRef = useRef(showNotesDrawer);
+  const showQueueDrawerRef = useRef(showQueueDrawer);
+  const showOptionsMenuRef = useRef(showOptionsMenu);
+
+  useEffect(() => { lyricsExpandedRef.current = lyricsExpanded; }, [lyricsExpanded]);
+  useEffect(() => { showNotesDrawerRef.current = showNotesDrawer; }, [showNotesDrawer]);
+  useEffect(() => { showQueueDrawerRef.current = showQueueDrawer; }, [showQueueDrawer]);
+  useEffect(() => { showOptionsMenuRef.current = showOptionsMenu; }, [showOptionsMenu]);
+
+  // Handle collapsing Now Playing player
+  const handleCollapse = () => {
+    if (showQueueDrawer) { setShowQueueDrawer(false); return; }
+    if (lyricsExpanded) { setLyricsExpanded(false); return; }
+    if (showNotesDrawer) { setShowNotesDrawer(false); return; }
+    if (showOptionsMenu) { setShowOptionsMenu(false); return; }
+
+    if (window.history?.state?.layer === 'player') {
+      try {
+        window.history.back();
+        return;
+      } catch (e) {}
+    }
+    closeNowPlaying();
+  };
+
+  // Synchronize drawer opening with history
+  const anyDrawerOpen = Boolean(lyricsExpanded || showQueueDrawer || showNotesDrawer || showOptionsMenu);
+  useEffect(() => {
+    if (anyDrawerOpen) {
+      if (window.history?.state?.drawer !== true) {
+        try {
+          window.history.pushState({ ...window.history?.state, drawer: true }, '');
+        } catch (e) {}
+      }
+    }
+  }, [anyDrawerOpen]);
+
+  // Capture back button while drawers are open inside player
+  useEffect(() => {
+    if (!isNowPlayingOpen) return;
+
+    const handleDrawerPop = (e) => {
+      if (showQueueDrawerRef.current) {
+        e.stopImmediatePropagation();
+        setShowQueueDrawer(false);
+        return;
+      }
+      if (showNotesDrawerRef.current) {
+        e.stopImmediatePropagation();
+        setShowNotesDrawer(false);
+        return;
+      }
+      if (lyricsExpandedRef.current) {
+        e.stopImmediatePropagation();
+        setLyricsExpanded(false);
+        return;
+      }
+      if (showOptionsMenuRef.current) {
+        e.stopImmediatePropagation();
+        setShowOptionsMenu(false);
+        return;
+      }
+    };
+
+    window.addEventListener('popstate', handleDrawerPop, true);
+    return () => window.removeEventListener('popstate', handleDrawerPop, true);
+  }, [isNowPlayingOpen]);
+
   // Sync like & comments when track changes or modal opens
   useEffect(() => {
     if (currentTrack?._id && isNowPlayingOpen) {
@@ -186,8 +256,7 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
       <header className="relative z-20 flex items-center justify-between px-5 sm:px-8 pt-5 pb-2">
         {/* Left: Minimize / Collapse Chevron */}
         <button
-          onClick={closeNowPlaying}
-          className="p-2 -ml-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-all active:scale-95"
+          onClick={handleCollapse} className="p-2 -ml-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-all active:scale-95"
           title="Collapse Player"
           aria-label="Collapse Player"
         >
@@ -195,7 +264,7 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
         </button>
 
         {/* Center: Context & Playlist Header */}
-        <div className="text-center min-w-0 px-2 cursor-pointer" onClick={closeNowPlaying}>
+        <div className="text-center min-w-0 px-2 cursor-pointer" onClick={handleCollapse}>
           <p className="text-[10px] font-bold tracking-[0.2em] text-zinc-400 uppercase">
             Playing From
           </p>
@@ -538,8 +607,12 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
               Up Next ({queue.length})
             </h3>
             <button
-              onClick={() => setShowQueueDrawer(false)}
-              className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"
+              onClick={() => {
+              if (window.history?.state?.drawer) {
+                try { window.history.back(); return; } catch (e) {}
+              }
+              setShowQueueDrawer(false);
+            }} className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
@@ -586,8 +659,12 @@ export default function NowPlayingModal({ onOpenShare, onOpenAddToPlaylist }) {
               Community Notes ({comments.length})
             </h3>
             <button
-              onClick={() => setShowNotesDrawer(false)}
-              className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"
+              onClick={() => {
+              if (window.history?.state?.drawer) {
+                try { window.history.back(); return; } catch (e) {}
+              }
+              setShowNotesDrawer(false);
+            }} className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
