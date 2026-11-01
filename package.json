@@ -4,8 +4,8 @@
   "type": "module",
   "description": "FUZI VERSE — Complete Music Creator Platform",
   "scripts": {
-    "start": "node start.js",
-    "start:prod": "cd server && node src/index.js",
+    "start": "node server/src/index.js",
+    "start:prod": "node server/src/index.js",
     "build": "npm --prefix server install --include=dev && npm --prefix client install --include=dev && cd client && npm run build",
     "install:all": "npm --prefix server install && npm --prefix client install",
     "dev": "node start.js",
