@@ -191,6 +191,10 @@ export default function ExplorePage({
                     src={c.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400'}
                     alt={c.displayName}
                     className="w-full h-full rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${c.username || 'artist'}`;
+                    }}
                   />
                 </div>
                 <h4 className="text-xs sm:text-sm font-bold text-white truncate max-w-full group-hover:text-amber-400 transition-colors">

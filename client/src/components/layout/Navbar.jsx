@@ -222,6 +222,10 @@ export default function Navbar({ onNavigate, currentRoute, onSearch, onOpenDownl
                   }
                   alt={user?.displayName}
                   className="w-7 h-7 rounded-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${user?.username || 'user'}`;
+                  }}
                 />
                 <span className="text-xs font-semibold text-white max-w-[100px] truncate hidden md:inline">
                   {user?.displayName}

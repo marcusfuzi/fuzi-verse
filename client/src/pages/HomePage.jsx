@@ -220,6 +220,10 @@ export default function HomePage({
                       src={creator.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${creator.username}`}
                       alt={creator.displayName}
                       className="w-20 h-20 rounded-full object-cover border-2 border-white/10 group-hover:border-purple-400 transition-colors shadow-md"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${creator.username || 'artist'}`;
+                      }}
                     />
                     {creator.isVerified && (
                       <span className="absolute bottom-0 right-0 w-5 h-5 bg-purple-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-[#10121a]">

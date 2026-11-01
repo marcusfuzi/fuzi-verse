@@ -284,6 +284,10 @@ export default function ArtistProfilePage({
                 }
                 alt={profile.displayName}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.username || 'artist'}`;
+                }}
               />
 
               {/* Owner Click-to-Change-Photo Overlay */}
@@ -721,6 +725,10 @@ export default function ArtistProfilePage({
                       src={avatarPreview || profile.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.username}`}
                       alt="Avatar Preview"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.username || 'artist'}`;
+                      }}
                     />
                   </div>
 

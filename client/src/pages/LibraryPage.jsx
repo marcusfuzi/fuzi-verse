@@ -364,6 +364,10 @@ export default function LibraryPage({
                     src={creator.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${creator.username}`}
                     alt={creator.displayName}
                     className="w-16 h-16 rounded-full object-cover mx-auto mb-2 border border-white/10"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${creator.username || 'artist'}`;
+                    }}
                   />
                   <h4 className="text-xs font-bold text-white truncate">{creator.displayName}</h4>
                   <p className="text-[10px] text-zinc-400 mt-0.5">@{creator.username}</p>
