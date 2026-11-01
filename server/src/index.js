@@ -28,7 +28,7 @@ import commentRoutes from './routes/comments.js';
 import socialRoutes from './routes/social.js';
 import adminRoutes from './routes/admin.js';
 import analyticsRoutes from './routes/analytics.js';
-import { streamFromGridFS, getSmartFallback, syncSeedUploadsToGridFS } from './services/gridfsService.js';
+import { streamFromGridFS, syncSeedUploadsToGridFS } from './services/gridfsService.js';
 
 dotenv.config();
 
@@ -56,20 +56,14 @@ app.use('/uploads', express.static(path.resolve(__dirname, '..', 'uploads')));
 app.use('/uploads', express.static(path.resolve(__dirname, '..', '..', 'uploads')));
 app.use('/uploads', express.static(path.resolve(__dirname, '..', '..', 'server', 'uploads')));
 
-// Dynamic Atlas GridFS and Smart Fallback stream handler for audio & covers (prevents 404 permanently)
+// Dynamic Atlas GridFS stream handler for audio & covers (streams exact uploaded files permanently)
 app.get('/uploads/:folder/:filename', async (req, res, next) => {
-  const { folder, filename } = req.params;
+  const { filename } = req.params;
   try {
     const streamed = await streamFromGridFS(filename, req, res);
     if (streamed) return;
   } catch (err) {
     console.warn('[GridFS Stream] Warning:', err.message);
-  }
-
-  // If neither on disk nor in GridFS, serve matched smart fallback so audio never crashes/skips
-  const fallbackPath = getSmartFallback(folder, filename);
-  if (fallbackPath && fs.existsSync(fallbackPath)) {
-    return res.sendFile(fallbackPath);
   }
 
   next();

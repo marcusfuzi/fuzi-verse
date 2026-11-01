@@ -18,7 +18,7 @@ export function getGridFSBucket() {
 }
 
 /**
- * Save a local file into MongoDB Atlas GridFS
+ * Save a local file into MongoDB Atlas GridFS permanently
  */
 export async function saveToGridFS(filePath, filename, contentType) {
   try {
@@ -55,7 +55,7 @@ export async function saveToGridFS(filePath, filename, contentType) {
 }
 
 /**
- * Stream a file from GridFS with HTTP Range support for audio scrubbing
+ * Stream an exact file from GridFS with HTTP Range support for audio scrubbing
  */
 export async function streamFromGridFS(filename, req, res) {
   const gfs = getGridFSBucket();
@@ -105,67 +105,7 @@ export async function streamFromGridFS(filename, req, res) {
 }
 
 /**
- * Intelligent fallback file matcher so NO track or cover ever 404s
- */
-export function getSmartFallback(folder, filename) {
-  const possibleBaseDirs = [
-    path.resolve('server/uploads'),
-    path.resolve('uploads'),
-    path.resolve(__dirname, '..', '..', 'uploads'),
-    path.resolve(__dirname, '..', '..', 'server', 'uploads'),
-  ];
-
-  for (const base of possibleBaseDirs) {
-    const targetDir = path.join(base, folder);
-    if (!fs.existsSync(targetDir)) continue;
-
-    const files = fs.readdirSync(targetDir);
-    if (files.length === 0) continue;
-
-    const lowerName = filename.toLowerCase();
-
-    // Match keywords if possible
-    if (folder === 'audio') {
-      if (lowerName.includes('akhil')) {
-        const match = files.find((f) => f.toLowerCase().includes('akhil'));
-        if (match) return path.join(targetDir, match);
-      }
-      if (lowerName.includes('jai_dev') || lowerName.includes('jaidev')) {
-        const match = files.find((f) => f.toLowerCase().includes('jai_dev'));
-        if (match) return path.join(targetDir, match);
-      }
-      if (lowerName.includes('bhavyansh')) {
-        const match = files.find((f) => f.toLowerCase().includes('bhavyansh'));
-        if (match) return path.join(targetDir, match);
-      }
-      if (lowerName.includes('ayush')) {
-        const match = files.find((f) => f.toLowerCase().includes('ayush'));
-        if (match) return path.join(targetDir, match);
-      }
-      // Return first valid mp3
-      const anyMp3 = files.find((f) => f.endsWith('.mp3') || f.endsWith('.wav'));
-      if (anyMp3) return path.join(targetDir, anyMp3);
-    }
-
-    if (folder === 'covers') {
-      if (lowerName.includes('ayush')) {
-        const match = files.find((f) => f.toLowerCase().includes('ayush'));
-        if (match) return path.join(targetDir, match);
-      }
-      if (lowerName.includes('bhavyansh')) {
-        const match = files.find((f) => f.toLowerCase().includes('bhavyansh'));
-        if (match) return path.join(targetDir, match);
-      }
-      const anyImg = files.find((f) => f.endsWith('.jpg') || f.endsWith('.png') || f.endsWith('.jpeg'));
-      if (anyImg) return path.join(targetDir, anyImg);
-    }
-  }
-
-  return null;
-}
-
-/**
- * Sync all local uploads to Atlas GridFS permanently
+ * Sync local uploads to Atlas GridFS permanently
  */
 export async function syncSeedUploadsToGridFS() {
   try {
@@ -192,7 +132,6 @@ export async function syncSeedUploadsToGridFS() {
         }
       }
     }
-    console.log('✅ GridFS persistent backup synced with MongoDB Atlas.');
   } catch (err) {
     console.warn('GridFS seed sync warning:', err.message);
   }
