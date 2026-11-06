@@ -25,3 +25,4 @@ Thumbs.db
 
 # Local duplicate uploads cache
 client/public/uploads/
+.vscode/
