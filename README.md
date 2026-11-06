@@ -533,7 +533,7 @@ We welcome developers, designers, musicians, and creative minds to contribute to
 
 For a deeper technical explanation, setup instructions, architecture details, and API documentation, see:
 
-**[FUZI_VERSE_ARCHITECTURE_AND_GUIDE.md](./FUZI_VERSE_ARCHITECTURE_AND_GUIDE.md)**
+**[FUZI_VERSE_ARCHITECTURE_AND_GUIDE](./FUZI_VERSE_ARCHITECTURE_AND_GUIDE.md)**
 
 This guide covers:
 
